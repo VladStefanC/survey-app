@@ -107,6 +107,12 @@ a:hover {
   font-size: 11px;
 }
 
+.btn-s2 {
+  padding: 3px 6px;
+  font-size: 10px;
+  border-radius: 4px;
+}
+
 .input {
   width: 100%;
   background: var(--bg3);
