@@ -75,10 +75,14 @@ export async function POST(
 
     const invitation = db.prepare('SELECT * FROM invitations WHERE id = ?').get(invitationId);
 
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const host = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).host : 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
+    
     return NextResponse.json({ 
       invitation,
       token,
-      link: `${request.nextUrl.origin}/s/${survey.slug}?t=${token}`
+      link: `${baseUrl}/s/${survey.slug}?t=${token}`
     });
   } catch (error) {
     console.error('Generate link error:', error);
