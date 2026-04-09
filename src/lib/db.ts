@@ -5,25 +5,20 @@ import fs from 'fs';
 import path from 'path';
 
 const dbPath = process.env.DB_PATH || 'surveyapp.db';
-let db: Database.Database;
 
-function getDb(): Database.Database {
-  if (db) return db;
-  
-  if (dbPath !== 'surveyapp.db' && !dbPath.startsWith('.')) {
-    const dir = path.dirname(dbPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+if (dbPath !== 'surveyapp.db' && !dbPath.startsWith('.')) {
+  const dir = path.dirname(dbPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
-  
-  db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
-  return db;
 }
 
+const db = new Database(dbPath);
+
+db.pragma('journal_mode = WAL');
+
 export function initializeDatabase() {
-  getDb().exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
@@ -139,4 +134,4 @@ export function initializeDatabase() {
   `);
 }
 
-export { getDb as db, uuidv4, crypto };
+export { db, uuidv4, crypto };
