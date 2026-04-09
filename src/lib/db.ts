@@ -4,16 +4,19 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
-const dbPath = process.env.DB_PATH || 'surveyapp.db';
+const dbPath = process.env.DB_PATH || './surveyapp.db';
 
-if (dbPath !== 'surveyapp.db' && !dbPath.startsWith('.')) {
+let actualDbPath = dbPath;
+try {
   const dir = path.dirname(dbPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
+} catch {
+  actualDbPath = './surveyapp.db';
 }
 
-const db = new Database(dbPath);
+const db = new Database(actualDbPath);
 
 db.pragma('journal_mode = WAL');
 
