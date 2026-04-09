@@ -60,6 +60,7 @@ export async function POST(
 ) {
   await initDb();
   const userId = await getUserIdFromSession();
+  console.log('POST /api/surveys/[id]/questions - userId from session:', userId);
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
