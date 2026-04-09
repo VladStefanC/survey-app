@@ -1,34 +1,92 @@
+import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
-import Database from 'better-sqlite3';
+import fs from 'fs';
+import path from 'path';
 
-let dbInstance: Database.Database | null = null;
+let dbInstance: SqlJsDatabase | null = null;
+let dbPath: string = './surveyapp.db';
+let initPromise: Promise<void> | null = null;
 
-function getDb(): Database.Database {
-  if (!dbInstance) {
-    const dbPath = process.env.DB_PATH || './surveyapp.db';
-    dbInstance = new Database(dbPath);
-    dbInstance.pragma('journal_mode = WAL');
-  }
-  return dbInstance;
+export async function initDb(): Promise<void> {
+  if (dbInstance) return;
+  if (initPromise) return initPromise;
+  
+  initPromise = (async () => {
+    const SQL = await initSqlJs();
+    
+    dbPath = process.env.DB_PATH || './surveyapp.db';
+    
+    try {
+      if (fs.existsSync(dbPath)) {
+        const data = fs.readFileSync(dbPath);
+        dbInstance = new SQL.Database(data);
+      } else {
+        dbInstance = new SQL.Database();
+      }
+    } catch {
+      dbInstance = new SQL.Database();
+    }
+  })();
+  
+  await initPromise;
 }
 
-const dbProxy: Database.Database = new Proxy({} as Database.Database, {
-  get(_target, prop) {
-    if (prop === 'then') return undefined;
-    const target = getDb();
-    const desc = Object.getOwnPropertyDescriptor(target, prop);
-    if (desc && typeof desc.value === 'function') {
-      return desc.value.bind(target);
+function saveDb() {
+  if (dbInstance && dbPath) {
+    const data = dbInstance.export();
+    const buffer = Buffer.from(data);
+    const dir = path.dirname(dbPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
-    return (target as unknown as Record<string, unknown>)[prop as string];
+    fs.writeFileSync(dbPath, buffer);
   }
-});
+}
 
-export const db = dbProxy;
+const db = {
+  prepare: (sql: string) => ({
+    run: (...params: unknown[]) => {
+      if (!dbInstance) throw new Error('Database not initialized. Call initDb() first.');
+      dbInstance.run(sql, params as (string | number | null | Uint8Array)[]);
+      saveDb();
+      return { changes: dbInstance.getRowsModified() };
+    },
+    get: (...params: unknown[]) => {
+      if (!dbInstance) throw new Error('Database not initialized. Call initDb() first.');
+      const stmt = dbInstance.prepare(sql);
+      stmt.bind(params as (string | number | null | Uint8Array)[]);
+      if (stmt.step()) {
+        const row = stmt.getAsObject();
+        stmt.free();
+        return row;
+      }
+      stmt.free();
+      return undefined;
+    },
+    all: (...params: unknown[]) => {
+      if (!dbInstance) throw new Error('Database not initialized. Call initDb() first.');
+      const results: unknown[] = [];
+      const stmt = dbInstance.prepare(sql);
+      stmt.bind(params as (string | number | null | Uint8Array)[]);
+      while (stmt.step()) {
+        results.push(stmt.getAsObject());
+      }
+      stmt.free();
+      return results;
+    }
+  }),
+  exec: (sql: string) => {
+    if (!dbInstance) throw new Error('Database not initialized. Call initDb() first.');
+    dbInstance.run(sql);
+    saveDb();
+  }
+};
 
 export function initializeDatabase() {
-  getDb().exec(`
+  if (!dbInstance) throw new Error('Database not initialized. Call initDb() first.');
+  
+  db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
@@ -142,6 +200,8 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash);
     CREATE INDEX IF NOT EXISTS idx_responses_survey ON responses(survey_id);
   `);
+  
+  saveDb();
 }
 
-export { uuidv4, crypto };
+export { db, uuidv4, crypto };

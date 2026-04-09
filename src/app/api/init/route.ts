@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '@/lib/db';
+import { initDb, initializeDatabase } from '@/lib/db';
 
 export async function GET() {
+  await initDb();
   initializeDatabase();
   return NextResponse.json({ initialized: true });
 }

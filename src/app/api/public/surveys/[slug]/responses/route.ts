@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, uuidv4 } from '@/lib/db';
+import { db, initDb, uuidv4 } from '@/lib/db';
 import { hashToken } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  await initDb();
   const { slug } = await params;
   const token = request.nextUrl.searchParams.get('t');
 

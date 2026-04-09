@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, uuidv4 } from '@/lib/db';
+import { db, uuidv4, initDb } from '@/lib/db';
 import { getUserIdFromSession } from '@/lib/session';
 
 export async function GET(request: NextRequest) {
+  await initDb();
   const userId = await getUserIdFromSession();
   console.log('GET /api/surveys - userId from session:', userId);
   if (!userId) {
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  await initDb();
   const userId = await getUserIdFromSession();
   console.log('POST /api/surveys - userId from session:', userId);
   if (!userId) {

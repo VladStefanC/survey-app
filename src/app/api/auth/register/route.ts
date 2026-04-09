@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserByEmail, createUser, verifyPassword } from '@/lib/auth';
+import { getUserByEmail, createUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingUser = getUserByEmail(email);
+    const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return NextResponse.json(
         { error: 'Email already registered' },
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = createUser(email, password);
+    const user = await createUser(email, password);
 
     return NextResponse.json({
       user: { id: user.id, email: user.email }

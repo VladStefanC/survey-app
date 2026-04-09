@@ -1,6 +1,15 @@
-import { db, uuidv4 } from './db';
+import { db, uuidv4, initDb } from './db';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+
+let dbInitialized = false;
+
+async function ensureDb() {
+  if (!dbInitialized) {
+    await initDb();
+    dbInitialized = true;
+  }
+}
 
 export interface User {
   id: string;
@@ -9,7 +18,8 @@ export interface User {
   created_at: string;
 }
 
-export function createUser(email: string, password: string): User {
+export async function createUser(email: string, password: string): Promise<User> {
+  await ensureDb();
   const id = uuidv4();
   const password_hash = bcrypt.hashSync(password, 10);
   
@@ -19,12 +29,14 @@ export function createUser(email: string, password: string): User {
   return { id, email, password_hash, created_at: new Date().toISOString() };
 }
 
-export function getUserByEmail(email: string): User | undefined {
+export async function getUserByEmail(email: string): Promise<User | undefined> {
+  await ensureDb();
   const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
   return stmt.get(email) as User | undefined;
 }
 
-export function getUserById(id: string): User | undefined {
+export async function getUserById(id: string): Promise<User | undefined> {
+  await ensureDb();
   const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
   return stmt.get(id) as User | undefined;
 }
@@ -33,7 +45,8 @@ export function verifyPassword(password: string, hash: string): boolean {
   return bcrypt.compareSync(password, hash);
 }
 
-export function createSession(userId: string): string {
+export async function createSession(userId: string): Promise<string> {
+  await ensureDb();
   const id = uuidv4();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   
@@ -43,12 +56,14 @@ export function createSession(userId: string): string {
   return id;
 }
 
-export function getSession(id: string): { user_id: string } | undefined {
+export async function getSession(id: string): Promise<{ user_id: string } | undefined> {
+  await ensureDb();
   const stmt = db.prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?');
   return stmt.get(id, new Date().toISOString()) as { user_id: string } | undefined;
 }
 
-export function deleteSession(id: string): void {
+export async function deleteSession(id: string): Promise<void> {
+  await ensureDb();
   const stmt = db.prepare('DELETE FROM sessions WHERE id = ?');
   stmt.run(id);
 }

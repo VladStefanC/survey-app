@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = getUserByEmail(email);
+    const user = await getUserByEmail(email);
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionId = createSession(user.id);
+    const sessionId = await createSession(user.id);
 
     const response = NextResponse.json({
       user: { id: user.id, email: user.email }

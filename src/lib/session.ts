@@ -9,6 +9,6 @@ export async function getUserIdFromSession(): Promise<string | null> {
     return null;
   }
 
-  const session = getSession(sessionId);
+  const session = await getSession(sessionId);
   return session?.user_id || null;
 }

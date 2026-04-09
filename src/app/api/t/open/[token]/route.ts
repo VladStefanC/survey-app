@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, initDb } from '@/lib/db';
 import { hashToken } from '@/lib/auth';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  await initDb();
   const { token } = await params;
   const tokenHash = hashToken(token);
 
