@@ -4,7 +4,7 @@ import Database from 'better-sqlite3';
 
 let dbInstance: Database.Database | null = null;
 
-export function getDb(): Database.Database {
+function getDb(): Database.Database {
   if (!dbInstance) {
     const dbPath = process.env.DB_PATH || './surveyapp.db';
     dbInstance = new Database(dbPath);
@@ -12,6 +12,20 @@ export function getDb(): Database.Database {
   }
   return dbInstance;
 }
+
+const dbProxy: Database.Database = new Proxy({} as Database.Database, {
+  get(_target, prop) {
+    if (prop === 'then') return undefined;
+    const target = getDb();
+    const desc = Object.getOwnPropertyDescriptor(target, prop);
+    if (desc && typeof desc.value === 'function') {
+      return desc.value.bind(target);
+    }
+    return (target as unknown as Record<string, unknown>)[prop as string];
+  }
+});
+
+export const db = dbProxy;
 
 export function initializeDatabase() {
   getDb().exec(`
@@ -130,4 +144,4 @@ export function initializeDatabase() {
   `);
 }
 
-export { getDb as db, uuidv4, crypto };
+export { uuidv4, crypto };
