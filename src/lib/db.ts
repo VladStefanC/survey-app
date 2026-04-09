@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
-const db = new Database('surveyapp.db');
+const db = new Database(process.env.DB_PATH || 'surveyapp.db');
 
 db.pragma('journal_mode = WAL');
 
