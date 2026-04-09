@@ -13,7 +13,9 @@ export async function initDb(): Promise<void> {
   if (initPromise) return initPromise;
   
   initPromise = (async () => {
-    const SQL = await initSqlJs();
+    const SQL = await initSqlJs({
+      locateFile: (file: string) => `https://sql.js.org/dist/${file}`
+    });
     
     dbPath = process.env.DB_PATH || './surveyapp.db';
     
