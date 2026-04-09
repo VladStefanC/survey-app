@@ -75,9 +75,7 @@ export async function POST(
 
     const invitation = db.prepare('SELECT * FROM invitations WHERE id = ?').get(invitationId);
 
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const host = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL).host : 'localhost:3000';
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://survey-app-v2-ln0j.onrender.com';
     
     return NextResponse.json({ 
       invitation,
