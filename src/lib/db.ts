@@ -1,13 +1,29 @@
 import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
-const db = new Database(process.env.DB_PATH || 'surveyapp.db');
+const dbPath = process.env.DB_PATH || 'surveyapp.db';
+let db: Database.Database;
 
-db.pragma('journal_mode = WAL');
+function getDb(): Database.Database {
+  if (db) return db;
+  
+  if (dbPath !== 'surveyapp.db' && !dbPath.startsWith('.')) {
+    const dir = path.dirname(dbPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  }
+  
+  db = new Database(dbPath);
+  db.pragma('journal_mode = WAL');
+  return db;
+}
 
 export function initializeDatabase() {
-  db.exec(`
+  getDb().exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
@@ -123,4 +139,4 @@ export function initializeDatabase() {
   `);
 }
 
-export { db, uuidv4, crypto };
+export { getDb as db, uuidv4, crypto };
