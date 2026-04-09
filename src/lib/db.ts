@@ -13,8 +13,9 @@ export async function initDb(): Promise<void> {
   if (initPromise) return initPromise;
   
   initPromise = (async () => {
+    const wasmPath = path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
     const SQL = await initSqlJs({
-      locateFile: (file: string) => `https://sql.js.org/dist/${file}`
+      wasmBinary: fs.readFileSync(wasmPath) as unknown as ArrayBuffer
     });
     
     dbPath = process.env.DB_PATH || './surveyapp.db';
