@@ -100,6 +100,7 @@ export default function SurveyEditPage({ params }: { params: Promise<{ id: strin
           type: newQuestion.type,
           title: newQuestion.title,
           required: newQuestion.required,
+          max_selections: newQuestion.type === 'choice' ? newQuestion.max_selections : undefined,
           options: newQuestion.type === 'choice' ? newQuestion.options.filter(o => o) : undefined,
         }),
       });
